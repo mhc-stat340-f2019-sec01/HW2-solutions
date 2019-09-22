@@ -1,0 +1,443 @@
+---
+title: "HW2"
+author: "Solutions"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Details
+
+### Due Date
+
+This assignment is due at 9:30 AM on Friday, Sept 20.
+
+### Grading
+
+20% of your grade on this assignment is for completion.  A quick pass will be made to ensure that you've made a reasonable attempt at all problems.
+
+Some of the problems will be graded more carefully for correctness.  In grading these problems, an emphasis will be placed on full explanations of your thought process.  You usually won't need to write more than a few sentences for any given problem, but you should write complete sentences!  Understanding and explaining the reasons behind your decisions is more important than making the "correct" decision.
+
+Solutions to all problems will be provided.
+
+### Collaboration
+
+You are allowed to work with others on this assignment, but you must complete and submit your own write up.  You should not copy large blocks of code or written text from another student.
+
+### Sources
+
+You may refer to class notes, our textbook, Wikipedia, etc..  All sources you refer to must be cited in the space I have provided at the end of this problem set.
+
+In particular, you may find the following resources to be valuable:
+
+ * Courses assigned on DataCamp
+ * Example R code from class
+ * Cheat sheets and resources linked from [http://www.evanlray.com/stat340_f2019/resources.html]
+
+### Load Packages
+
+The following R code loads packages needed in this assignment.
+
+```{r, warning=FALSE, message=FALSE}
+library(readr)
+library(dplyr)
+library(ggplot2)
+```
+
+# Conceptual Problems
+
+If you prefer, you can write your answers to all conceptual problems by hand and turn in a physical copy.  It's also fine if you want to write your answers up in LaTeX and push the pdf to GitHub.
+
+## Problem 1: Column space, fitted values, hat matrix, and projections.
+
+Please complete the example problem we started in class on Friday, Sept. 13 (linked to from the schedule page).  This will be graded for completion only, but it's important that you understand what's happening.  I'm happy to talk through it with you.
+
+## Problem 2: One-way ANOVA
+
+Suppose I conduct an experiment where a total of $n$ subjects are randomly assigned to one of two groups (control and treatment).  There are $n_1$ subjects in the control group and $n_2$ subjects in the treatment group (so $n_1 + n_2 = n$).  For each subject $i$, I record a response variable $y_i$.
+
+### (a) Write down an appropriate model for these data for a single observation indexed by $i$.  As part of your answer, please define $x_i$ and specify what follows a normal distribution.
+
+$y_i = \beta_0 + \beta_1 x_i + \varepsilon_i$, where
+$x_i = \begin{cases} 1 \text{ if observation $i$ is in the treatment group} \\ 0 \text{ if observation $i$ is in the control group} \end{cases}$ and $\varepsilon_i \sim \text{Normal}(0, \sigma^2)$.
+
+### (b) Write down the model for these data in matrix form.  As part of your answer, please define $X$ and specify what follows a normal distribution.  You may assume the first $n_1$ subjects were assigned to the control group and the remaining $n_2$ subjects were assigned to the treatment group.  Since you don't know exact values for $n_1$ and $n_2$, you'll probably have to have some dots ($\vdots$) in your specification of $X$ to indicate some rows that you aren't explicitly writing down.
+
+$Y = X \beta + \varepsilon$, where
+
+$$Y = \begin{bmatrix} Y_1 \\ Y_2 \\ \vdots \\ Y_n \end{bmatrix}, \qquad
+X = \begin{bmatrix} 1 & 0 \\ 1 & 0 \\ \vdots & \vdots \\ 1 & 0 \\ 1 & 1 \\ 1 & 1 \\ \vdots & \vdots \\ 1 & 1 \end{bmatrix} \text{ and }
+\varepsilon = \begin{bmatrix} \varepsilon_1 \\ \varepsilon_2 \\ \vdots \\ \varepsilon_n \end{bmatrix}$$
+
+In the design matrix $X$, the first $n_1$ rows have 0's in the second column and the remaining $n_2$ rows have 1's in the second column.
+
+### (c) By working through matrix calculations, find expressions for the coefficient estimates $\hat{\beta}$ in terms of $y_1, \ldots, y_{n}$, $n_1$, and $n_2$.
+
+\begin{align*}
+\hat{\beta} &= (X'X)^{-1} X' y \\
+&= \left( \begin{bmatrix} 1 & 1 & \cdots & 1 & 1 & 1 & \cdots & 1 \\ 0 & 0 & \cdots & 0 & 1 & 1 & \cdots & 1 \end{bmatrix} \begin{bmatrix} 1 & 0 \\ 1 & 0 \\ \vdots & \vdots \\ 1 & 0 \\ 1 & 1 \\ 1 & 1 \\ \vdots & \vdots \\ 1 & 1 \end{bmatrix}\right)^{-1} \begin{bmatrix} 1 & 1 & \cdots & 1 & 1 & 1 & \cdots & 1 \\ 0 & 0 & \cdots & 0 & 1 & 1 & \cdots & 1 \end{bmatrix} \begin{bmatrix} y_1 \\ y_2 \\ \vdots \\ y_n \end{bmatrix} \\
+&= \begin{bmatrix} n & n_2 \\ n_2 & n_2 \end{bmatrix}^{-1} \begin{bmatrix} \sum_{i=1}^n y_i \\ \sum_{i= n_1 + 1}^n y_i\end{bmatrix} \\
+&= \frac{1}{n n_2 - n_2 n_2} \begin{bmatrix} n_2 & -n_2 \\ -n_2 & n \end{bmatrix} \begin{bmatrix} \sum_{i=1}^n y_i \\ \sum_{i= n_1 + 1}^n y_i\end{bmatrix} \\
+&= \frac{1}{n_2 (n - n_2)} \begin{bmatrix} n_2 \sum_{i=1}^n y_i - n_2 \sum_{i= n_1 + 1}^n y_i \\ - n_2 \sum_{i=1}^n y_i + n \sum_{i= n_1 + 1}^n y_i \end{bmatrix} \\
+&= \frac{1}{n_1 n_2} \begin{bmatrix} n_2 \sum_{i=1}^{n_1} y_i \\ - n_2 \sum_{i=1}^n y_i + (n_1 + n_2) \sum_{i= n_1 + 1}^n y_i \end{bmatrix} \\
+&= \frac{1}{n_1 n_2} \begin{bmatrix} n_2 \sum_{i=1}^{n_1} y_i \\ - n_2 \sum_{i=1}^n y_i + (n_1 + n_2) \sum_{i= n_1 + 1}^n y_i \end{bmatrix} \\
+&= \frac{1}{n_1 n_2} \begin{bmatrix} n_2 \sum_{i=1}^{n_1} y_i \\ - n_2 \sum_{i=1}^{n_1} y_i + n_1\sum_{i= n_1 + 1}^n y_i \end{bmatrix} \\
+&= \begin{bmatrix} \frac{1}{n_1} \sum_{i=1}^{n_1} y_i \\ - \frac{1}{n_1} \sum_{i=1}^{n_1} y_i + \frac{1}{n_2} \sum_{i= n_1 + 1}^n y_i \end{bmatrix} \\
+&= \begin{bmatrix} \bar{y}_1 \\ \bar{y}_2 - \bar{y}_1 \end{bmatrix}
+\end{align*}
+
+where $\bar{y}_1$ is the sample mean of observed responses for the control group and $\bar{y}_2$ is the sample mean of observed responses from the treatment group.
+
+# Applied Problems
+
+
+## Problem 3: Two-way ANOVA
+
+I made this example up.  Suppose a study was done to evaluate two possible factors on heart health: a new medication, and an exercise program.  15 subjects were recruited for the study, and randomly assigned to one of three groups (with 5 subjects in each group):
+
+ * control: participants did not receive the medication or participate in the exercise program.
+ * medicine: participants took the medication, but did not exercise
+ * both: participants took the medication and also exercised.
+
+The following R code creates a manufactured data set with made up numbers.  The response `health` represents a measure of heart health where a larger number is better.  There is a column called `medication` which has the value `yes` if the participant received medication and `no` if they did not.  Similarly, the column called `exercise` has the value `yes` if the participant was in the exercise program and `no` if they were not.
+
+```{r}
+set.seed(19842)
+
+study_data <- data.frame(
+  health = rnorm(15, mean = c(rep(50, 5), rep(70, 5), rep(85,5)), sd = 5),
+  medication = c(rep("no", 5), rep("yes", 5), rep("yes", 5)),
+  exercise = c(rep("no", 5), rep("no", 5), rep("yes", 5))
+)
+```
+
+### (a) Consider an additive two-way ANOVA model for these data:
+
+\begin{align*}
+y_i &= \beta_0 + \beta_1 x_{i1} + \beta_2 x_{i2} + \varepsilon_i \text{, where} \\
+x_{i1} &= \begin{cases} 0 \text{ if subject $i$ did not take the medication} \\ 1 \text{ if subject $i$ did take the medication} \end{cases} \\
+x_{i2} &= \begin{cases} 0 \text{ if subject $i$ did not participate in the exercise program} \\ 1 \text{ if subject $i$ did participate in the exercise program} \end{cases} \\
+\varepsilon_i &\sim \text{Normal}(0, \sigma^2)
+\end{align*}
+
+#### i. Based on this model specification, find the mean health score for the following four combinations, in terms of $\beta_0$, $\beta_1$, and $\beta_2$:
+
+ * No medication, no exercise: $\beta_0$
+ * Medication, no exercise: $\beta_0 + \beta_1$
+ * No medication, exercise: $\beta_0 + \beta_2$
+ * Medication, exercise: $\beta_0 + \beta_1 + \beta_2$
+
+#### ii. In this model specification, what are the interpretations of each of $\beta_0$, $\beta_1$, and $\beta_2$?  It may help to compare your answers to part i.
+
+$\beta_0$ represents the mean health score for people in the control group (no medication and no exercise).
+
+$\beta_1$ represents the difference in mean health scores between groups that are taking medicine and are not taking medicine, holding fixed whether or not the person is exercising.
+
+$\beta_2$ represents the difference in mean health scores between groups that are participating in the exercise program and are not participating in the exercise program, holding fixed whether they are taking the medication.
+
+#### iii. Fit the additive model specified above to these data, and print out a model summary.
+
+```{r}
+model_fit <- lm(health ~ medication + exercise, data = study_data)
+summary(model_fit)
+```
+
+#### iv. Extract the design matrix $X$ from the model fit object and print it out.  Does this matrix  have full column rank?  If so, explain how you can tell; if not, find a way to express one of the columns of $X$ as a linear combination of the others.
+
+```{r}
+X <- model.matrix(model_fit)
+X
+
+solve(t(X) %*% X)
+```
+
+Yes, X has full column rank.  There is no way to obtain any of the columns as a linear combination of the other two.  We also confirmed that $X'X$ was invertible.  Note that the model summary output contained estimates for all three model parameters.
+
+#### v. Find the residual sum of squares from your model fit in part iii.
+
+```{r}
+sum((study_data$health - predict(model_fit))^2)
+```
+
+### (b) Now consider a model with interactions:
+
+\begin{align*}
+y_i &= \beta_0 + \beta_1 x_{i1} + \beta_2 x_{i2} + \beta_3 x_{i1} x_{i2} + \varepsilon_i \text{, where} \\
+x_{i1} &= \begin{cases} 0 \text{ if subject $i$ did not take the medication} \\ 1 \text{ if subject $i$ did take the medication} \end{cases} \\
+x_{i2} &= \begin{cases} 0 \text{ if subject $i$ did not participate in the exercise program} \\ 1 \text{ if subject $i$ did participate in the exercise program} \end{cases} \\
+\varepsilon_i &\sim \text{Normal}(0, \sigma^2)
+\end{align*}
+
+#### i. Based on this model specification, find the mean health score for the following four combinations, in terms of $\beta_0$, $\beta_1$, $\beta_2$, and $\beta_3$:
+
+ * No medication, no exercise: $\beta_0$
+ * Medication, no exercise: $\beta_0 + \beta_1$
+ * No medication, exercise: $\beta_0 + \beta_2$
+ * Medication, exercise: $\beta_0 + \beta_1 + \beta_2 + \beta_3$
+
+#### ii. In this model specification, what are the interpretations of each of $\beta_0$, $\beta_1$, $\beta_2$, and $\beta_3$?  It may help to compare your answers to part i.
+
+$\beta_0$ represents the mean health score for people in the control group (no medication and no exercise).
+
+$\beta_1$ represents the difference in mean health scores between people who aren't in the exercise program but take medication and people who aren't in the exercise program and also don't take medication.
+
+$\beta_2$ represents the difference in mean health scores between people who are participating in the exercise program but not taking medicine and people who are not participating int he exercise program and also don't take medicine.
+
+$\beta_3$ represents the additional change in mean health scores due to adding medication when someone is exercising relative to when they are not exercising.  Equivalently, $\beta_3$ represents the additional change in mean health scores due to adding participation in an exercise program when someone is taking the medication relative to when they are not taking the medication.
+
+#### iii. Fit the interactions model specified above to these data, and print out a model summary.
+
+```{r}
+model_fit <- lm(health ~ medication * exercise, data = study_data)
+summary(model_fit)
+```
+
+#### iv. Extract the design matrix from the model fit object and print it out.  Does this matrix have full column rank?  If so, explain how you can tell; if not, find a way to express one of the columns of $X$ as a linear combination of the others.
+
+```{r, error=TRUE}
+X <- model.matrix(model_fit)
+X
+
+solve(t(X) %*% X)
+```
+
+This design matrix does not have full columnn rank: the third and fourth columns are equal to each other.
+
+#### v. Find two different sets of parameter estimates $\hat{\beta}_0$, $\hat{\beta}_1$, $\hat{\beta}_2$, and $\hat{\beta}_3$ that give the same residual sum of squares that you obtained in part (a) v.
+
+```{r}
+beta_hat_a <- matrix(coef(model_fit))
+beta_hat_a[4, 1] <- 0
+sum((study_data$health - X %*% beta_hat_a)^2)
+
+beta_hat_b <- beta_hat_a
+beta_hat_a[4, 1] <- beta_hat_a[3, 1]
+beta_hat_a[3, 1] <- 0
+sum((study_data$health - X %*% beta_hat_b)^2)
+
+beta_hat_a
+beta_hat_b
+```
+
+## Problem 4: Polynomial Regression Example 1
+
+The following R code loads in a data set with measurements of the tensile strength of paper (`tensile`, in units of pounds per square inch), and the percent of hardwood in the batch of pulp that was used to produce the paper (`hardwood`), for 19 different samples of paper with different percent hardwoods.
+
+```{r}
+paper <- read_csv("http://www.evanlray.com/data/BSDA/Hardwood.csv")
+```
+
+References:
+
+These data, and the description above, come from the R package for "Basic Statistics and Data Analysis" by Alan T. Arnholt: https://alanarnholt.github.io/BSDA/
+
+### (a) Fit and summarize polynomial regression models of degree 2, 3, and 4.
+
+For each of these three candidate models, please produce:
+
+ * Output from the `summary` function that you could use to conduct relevant hypothesis tests
+ * A scatter plot of the data with the estimated curve overlaid on top
+ * A plot of either residuals vs. fitted values or residuals vs. percent hardwood in the pulp (your choice)
+ * The residual sum of squares (RSS).  (You should also know how to find the $R^2$ and residual standard error (RSE) in the `summary` output.)
+
+
+Degree 2:
+
+```{r}
+fit2 <- lm(tensile ~ poly(hardwood, 2, raw = TRUE), data = paper)
+summary(fit2)
+
+paper <- paper %>%
+  mutate(
+    resid = residuals(fit2),
+    fitted = predict(fit2)
+  )
+
+ggplot(data = paper, mapping = aes(x = hardwood, y = tensile)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y ~ poly(x, 2, raw = TRUE))
+
+ggplot(data = paper, mapping  = aes(x = hardwood, y = resid)) +
+  geom_point()
+
+ggplot(data = paper, mapping  = aes(x = fitted, y = resid)) +
+  geom_point()
+
+# Training RSS
+paper %>% summarize(train_RSS = mean(resid^2))
+```
+
+Degree 3:
+
+```{r}
+fit3 <- lm(tensile ~ poly(hardwood, 3, raw = TRUE), data = paper)
+summary(fit3)
+
+paper <- paper %>%
+  mutate(
+    resid = residuals(fit3),
+    fitted = predict(fit3)
+  )
+
+ggplot(data = paper, mapping = aes(x = hardwood, y = tensile)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y ~ poly(x, 3, raw = TRUE))
+
+ggplot(data = paper, mapping  = aes(x = hardwood, y = resid)) +
+  geom_point()
+
+ggplot(data = paper, mapping  = aes(x = fitted, y = resid)) +
+  geom_point()
+
+# Training RSS
+paper %>% summarize(train_RSS = mean(resid^2))
+```
+
+
+Degree 4:
+
+```{r}
+fit4 <- lm(tensile ~ poly(hardwood, 4, raw = TRUE), data = paper)
+summary(fit4)
+
+paper <- paper %>%
+  mutate(
+    resid = residuals(fit4),
+    fitted = predict(fit4)
+  )
+
+ggplot(data = paper, mapping = aes(x = hardwood, y = tensile)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y ~ poly(x, 4, raw = TRUE))
+
+ggplot(data = paper, mapping  = aes(x = hardwood, y = resid)) +
+  geom_point()
+
+ggplot(data = paper, mapping  = aes(x = fitted, y = resid)) +
+  geom_point()
+
+# Training RSS
+paper %>% summarize(train_RSS = mean(resid^2))
+```
+
+
+### (b) Based on your results above, which model do you prefer?
+
+You should justify your decision with reference to a discussion of a couple of the plots you created and a comparison of RSS.  You can also discuss hypothesis test results if you want, but that's not required.  You don't have to discuss all of the plots and all of the statistics, but you should know how to interpret them all.
+
+I prefer the degree 3 polynomial.  The plots indicate a clear lack of fit for the degree 2 polynomial.  In the plot with the estimated curve overlaid on the scatter plot, we see that the estimated curve is generally too low for the first few observations, too high for the next few observations, too low again near the peak, and too high for the last few observations.  This shows up in the residual plots with a sinusoidal pattern for the residuals vs. explanatory variable, and a curved pattern for residuals vs. predicted.  These trends were not as strong in the plots for the degree 3 and degree 4 models.  There wasn't much of a difference in the plots for the degree 3 and degree 4 models, and so I prefer the simpler of the two.
+
+The hypothesis test results indicate that the degree 2 and degree 3 terms are "statistically significant".  The degree 4 term does not account for a statistically significant amount of variation in the response variable if the degree 2 and degree 3 terms are included.
+
+As we've discussed, it's not useful to compare training set RSS, $R^2$, or RSE for models with different levels of flexibility.  The $R^2$ was always higher for higher degree models, and the RSS and RSE were always lower for higher degree models.  This did not indicate a meaningfully improved fit though.
+
+
+### (c) Suppose I got a new sample based on a new batch of pulp from the same factory.  Do you have confidence that the predicted tensile strength from your selected model from part (b) would be similar to the observed values of tensile strength in my new sample?  Why or why not?  Just write a sentence or two.
+
+Two possible answers:
+
+1. Based on the plots, it does not appear that we have overfit our training data set.  I feel fairly confident that predictions for a test set observation would perform well.
+
+2. There could be systematic differences between different batches of pulp.  Since our model was fit based on samples from a single batch of pulp, I will always be cautious about extrapolation to different batches.  I would really like to have data from multiple batches included in my training data set.
+
+### (d) Extract the model matrix from your degree 2 polynomial fit, and use it to find the coefficient estimates $\hat{\beta}$, the hat matrix $H$, and the fitted values $\hat{y}$ through direct matrix manipulations.
+
+```{r}
+X <- model.matrix(fit2)
+y <- matrix(paper$tensile)
+
+beta_hat <- solve(t(X) %*% X) %*% t(X) %*% y
+beta_hat
+H <- X %*% solve(t(X) %*% X) %*% t(X)
+H
+
+y_hat <- X %*% beta_hat
+y_hat
+
+y_hat_v2 <- H %*% y
+y_hat_v2
+```
+
+You only needed to calculate $\hat{y}$ one way.
+
+## Problem 5: Polynomial Regression Example 2
+
+The United Nations Development Programme (UNDP) uses the Human Development Index (HDI) in an attempt to summarize in one number the progress in health, education, and economics of a country. In 2012, the HDI was as high as 0.955 for Norway and as low as 0.304 for Niger. The gross national income per capita, by contrast, is often used to summarize the overall economic strength of a country. In this example we will consider models between these variables, with `gni_per_cap` as the explanatory variable and `hdl` as the response variable.
+
+The following R chunk reads in data including the HDI and gross national income per capita for 187 countries as of 2012, and creates an initial plot.
+
+```{r}
+country_data <- read_csv("https://mhc-stat140-2017.github.io/data/sdm4/HDI_2012.csv")
+names(country_data) <- c("hdi_rank", "country", "country_abbr", "hdi", "life_expectancy", "mean_school_years", "exp_chool_years", "gni_per_cap", "gni_rank_minus_hdi_rank", "non_income_hdi", "type")
+head(country_data)
+
+ggplot(data = country_data, mapping = aes(x = gni_per_cap, y = hdi)) +
+  geom_point()
+```
+
+References:
+
+These data, and the description above, are from Statistics: Data and Models, 4th edition, by De Veaux et al.
+
+### (a) Fit a degree 8 polynomial and use the `summary` function to print out a summary of the model fit.  If you used a hypothesis test at the $\alpha = 0.05$ significance level to pick a polynomial model for these data, which model would you select?  You don't need to conduct any additional model checks in this part of the problem.
+
+```{r}
+fit8 <- lm(hdi ~ poly(gni_per_cap, 8, raw = TRUE), data = country_data)
+summary(fit8)
+```
+
+Based on the output above, it looks like we could drop the degree 8 term from this model.  More specifically, we could conduct the following hypothesis test:
+
+$H_0: \beta_8 = 0$ vs. $H_A: \beta_8 \neq 0$
+
+With a p-value of 0.061235, we fail to reject the null hypothesis at a signficance level of $\alpha = 0.05$.
+
+I didn't ask you to do this, but it might be nice to check out the degree 7 model fit as well:
+
+```{r}
+fit7 <- lm(hdi ~ poly(gni_per_cap, 7), data = country_data)
+summary(fit7)
+```
+
+Based on the hypothesis tests, it looks like we could use a degree 7 polynomial for these data.  Of course, in reality we should always look at some plots too - see the next part.
+
+### (b) Create four additional plots (or if you prefer, one additional plot with four curves on it) displaying polynomial fits of degrees 2, 3, 5, and 7 overlaid on the scatterplot(s).  Do any of these models provide an adequate summary of the data?  If I found data for a few additional countries, would you have confidence that the predicted `hdl` from the best polynomial model from part (a) would be similar to the observed values of `hdl` in my new sample?
+
+```{r}
+pred2 <- function(x) {
+  fit <- lm(hdi ~ poly(gni_per_cap, degree = 2, raw = TRUE), data = country_data)
+  predict(fit, newdata = data.frame(gni_per_cap = x))
+}
+pred3 <- function(x) {
+  fit <- lm(hdi ~ poly(gni_per_cap, degree = 3, raw = TRUE), data = country_data)
+  predict(fit, newdata = data.frame(gni_per_cap = x))
+}
+pred5 <- function(x) {
+  fit <- lm(hdi ~ poly(gni_per_cap, degree = 5, raw = TRUE), data = country_data)
+  predict(fit, newdata = data.frame(gni_per_cap = x))
+}
+pred7 <- function(x) {
+  fit <- lm(hdi ~ poly(gni_per_cap, degree = 7, raw = TRUE), data = country_data)
+  predict(fit, newdata = data.frame(gni_per_cap = x))
+}
+ggplot(data = country_data, mapping = aes(x = gni_per_cap, y = hdi)) +
+  geom_point() +
+  stat_function(fun = pred2, color = "red") +
+  stat_function(fun = pred3, color = "orange") +
+  stat_function(fun = pred5, color = "cornflowerblue") +
+  stat_function(fun = pred7, color = "purple")
+```
+
+None of these polynomial models seem very good.  In particular, the degree 7 polynomial (plotted in purple) that was selected by the hypothesis tests above seems much too wiggly and is definitely overfitting the two data points with large values of `gni_per_cap`, and makes unreasonable predictions in the range of 50,000 to 80,000.  The predicted value for a new observation might be ok for values of GNI per capita less than about 37500, but I would not trust the predictions from any of these models along the full range of values of GNI per capita.
+
+# Collaboration and Sources
+
+If you worked with any other students on this assignment, please list their names here.
+
+
+
+If you referred to any sources (including our text book), please list them here.  No need to get into formal citation formats, just list the name of the book(s) you used or provide a link to any online resources you used.
+
+
